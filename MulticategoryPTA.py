@@ -27,16 +27,18 @@ def getImagesArray(fname):
 # end of reading input
 
 
-w = np.random.rand(10,784)
+
 # x = np.random.rand(6000, 784,1)
 # d = np.random.rand(6000,10,1)
 # v = np.random.rand(10,1)
+w = np.random.rand(10, 784)
 def MPTA(no_of_TrainingImages):
-    global epoch, w, img
+    global epoch, img, w
     epoch = 0
     errors = []
     epochs = []
     toContinue = True
+
     # getting the no of images
     i = no_of_TrainingImages
     #i = img.shape[0]
@@ -153,28 +155,31 @@ test_desired_label = getLabelsArray("t10k-labels.idx1-ubyte", test_size_img, 10)
 #STEP - f
 no_of_TrainingImages = 50
 n = 1
-e=0.05
+e=0.01
+#w = np.random.rand(10, 784)
 MPTA(no_of_TrainingImages)
 testImages()
 
 #STEP - g
 no_of_TrainingImages = 1000
 n = 1
-e=0.05
+e=0.01
+w = np.random.rand(10, 784)
 MPTA(no_of_TrainingImages)
 testImages()
 
 #STEP - h
-no_of_TrainingImages = 60000
-n = 1
-e = 0
-MPTA(no_of_TrainingImages)
-testImages()
+# no_of_TrainingImages = 60000
+# n = 1
+# e = 0
+# MPTA(no_of_TrainingImages)
+#testImages()
 
 #STEP - i
 no_of_TrainingImages = 60000
 n = 1
-e = 0.1
+e = 0.15
+w = np.random.rand(10, 784)
 MPTA(no_of_TrainingImages)
 testImages()
 
