@@ -35,8 +35,8 @@ def getInitialWeights():
 def getWeights():
     #return 0.45,0.45
     w = np.zeros(shape = (2,1))
-    x= 0.5
-    y = 0.45
+    x= 0.001
+    y = 0.0004
     w[0][0] = x
     w[1][0] = y
     return w
