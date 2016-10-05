@@ -27,12 +27,8 @@ def getImagesArray(fname):
 # end of reading input
 
 
-
-# x = np.random.rand(6000, 784,1)
-# d = np.random.rand(6000,10,1)
-# v = np.random.rand(10,1)
 w = np.random.rand(10, 784)
-def MPTA(no_of_TrainingImages):
+def MPTA(no_of_TrainingImages ):
     global epoch, img, w
     epoch = 0
     errors = []
@@ -42,16 +38,11 @@ def MPTA(no_of_TrainingImages):
     # getting the no of images
     i = no_of_TrainingImages
     #i = img.shape[0]
-    while(toContinue):
-        #print("epoch :: ", epoch)
+    while(toContinue and epoch < 35):
         errors.append(0)
         for index in range(0, i):
-            #if index%10000 == 0:
-                #print(index, " elements done")
-            #print("printing image ", img[0])
             x = img[index].reshape(784,1)
             d = desired_label[index].reshape(10,1)
-            #errors[epoch]=0
             v = w.dot(x)
 
             maxIndex = findMaxIndex(v)
@@ -61,21 +52,16 @@ def MPTA(no_of_TrainingImages):
 
         epoch = epoch +1
         epochs.append(epoch)
-        #print(errors)
-        # updating weights
 
-        #print("before updating weights")
-        #print(w[0][:50])
+        # updating weights
         for index in range(0,i):
             x = img[index].reshape(784, 1)
             d = desired_label[index].reshape(10, 1)
             w = w + n * (d - applyStepFunctionOnV(w.dot(x))) * np.transpose(x)
 
-        #print("after updating weights")
-        #print(w[0][:50])
 
         # cehcking if the minimum error ratio is reached or not
-        if (errors[epoch-1]/i < e):
+        if (errors[epoch-1]/i <= e):
             toContinue = False
             print("epoch ", epoch, " error rate :: ", errors[epoch - 1] / i)
         else:
@@ -84,6 +70,8 @@ def MPTA(no_of_TrainingImages):
     print(" optimal weights found after", epoch, " epochs")
     plt.plot(epochs, errors, 'b')
     plt.axis([0, epoch, 0, max(errors)])
+    plt.xlabel("EpochCount")
+    plt.ylabel("ErrorCount")
     plt.show()
 
 # Testing
@@ -95,14 +83,12 @@ def testImages():
             print(index, " elements done")
         x = testImg[index].reshape(784,1)
         d = test_desired_label[index].reshape(10,1)
-        #errors[epoch]=0
         v = w.dot(x)
-
         maxIndex = findMaxIndex(v)
         v = getVectorWithOneAtIndex(maxIndex)
         if (not (d==v).all()):
             misClassErrorsInTesting = misClassErrorsInTesting + 1
-    print ("no of misclaffications", misClassErrorsInTesting)
+    print ("misclaffications error percentage", misClassErrorsInTesting/i)
 
 
 
@@ -137,15 +123,7 @@ def findMaxIndex (tempV):
     return maxIndex
 
 
-
-v = np.random.rand(10,1)
-v[5][0] = -1
-#print (v)
-#print(applyStepFunctionOnV(v))
-#print (findMaxIndex(v))
-#print (getVectorWithOneAtIndex(3))
-
-# Training the network
+# Reading the Testing and Training images and labels
 img, size_img = getImagesArray("train-images.idx3-ubyte")
 desired_label = getLabelsArray("train-labels.idx1-ubyte", size_img, 10)
 
@@ -155,33 +133,36 @@ test_desired_label = getLabelsArray("t10k-labels.idx1-ubyte", test_size_img, 10)
 #STEP - f
 no_of_TrainingImages = 50
 n = 1
-e=0.01
-#w = np.random.rand(10, 784)
+e=0.0
 MPTA(no_of_TrainingImages)
 testImages()
 
 #STEP - g
 no_of_TrainingImages = 1000
 n = 1
-e=0.01
+e=0.0
 w = np.random.rand(10, 784)
 MPTA(no_of_TrainingImages)
 testImages()
 
 #STEP - h
 # no_of_TrainingImages = 60000
-# n = 1
-# e = 0
+# w = np.random.rand(10, 784)
+# e=0.0
 # MPTA(no_of_TrainingImages)
-#testImages()
+# testImages()
+
+#from the above step it is observed that the errro rate is not going below 0.17
 
 #STEP - i
 no_of_TrainingImages = 60000
-n = 1
-e = 0.15
+e = 0.19
 w = np.random.rand(10, 784)
 MPTA(no_of_TrainingImages)
 testImages()
+
+
+
 
 
 

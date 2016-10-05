@@ -1,0 +1,99 @@
+import math
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def getGradient(x,y):
+    g = np.zeros(shape = (2,1))
+    gx = -(1/(x+y-1)) - 1/x
+    gy = -(1/(x+y-1)) - 1/y
+    g[0][0] = gx
+    g[1][0] = gy
+    return g
+
+def getHessian(x,y):
+    #h = np.zeros(shape = (2,2))
+    h00 = (1/math.pow(x+y-1,2)) + 1/math.pow(x,2)
+    h01 = 1/math.pow(x+y-1,2)
+    h10 = 1/math.pow(x+y-1,2)
+    h11 = (1/math.pow(x+y-1,2)) + 1/math.pow(y,2)
+    h = np.array([[h00, h01],[h10, h11]])
+    return h
+
+
+def getF(x,y):
+    return -(math.log(1-x-y)) - math.log(x) - math.log(y)
+
+def getInitialWeights():
+    return 0.45,0.45
+    x= random.uniform(0,0.999999)
+    y = 0.99999 - x
+    return x,y
+
+
+def getWeights():
+    #return 0.45,0.45
+    w = np.zeros(shape = (2,1))
+    x= 0.5
+    y = 0.45
+    w[0][0] = x
+    w[1][0] = y
+    return w
+
+def areConstraintsMet(x , y):
+    if ((x >0) and (y > 0) and ((x+y)<1) ):
+        return True
+    else:
+        return False
+
+def convergeCondition(x1, y1, x2, y2):
+    if( abs(x1-x2)<0.000000001 and abs(y1-y2)<0.000000001):
+        return True
+    else:
+        return False
+
+def plotGraphs(iterations, energy):
+    #print(" optimal weights found after", epoch, " epochs")
+    plt.plot(iterations, energy, 'b')
+    #plt.axis([0, iterations, 0, max(energy)])
+    plt.xlabel("Iteration")
+    plt.ylabel("Energy")
+    plt.show()
+
+def findOptimalWeights(isNewton):
+    #generating initial random points
+    w = getWeights()
+    n = 0.0001
+    hasConverged = False
+    index = 0
+    iterations = []
+    energy = []
+    while (not hasConverged):
+        iterations.append(index)
+        index+=1
+        #updating weights
+        g = getGradient(w[0][0], w[1][0])
+        w0  = w
+        h = getHessian(w[0][0], w[1][0])
+        h = np.linalg.inv(h)
+        if(isNewton):
+            w = w - (np.dot(h, g))
+        else:
+            w = w - n*(g)
+
+        if (not areConstraintsMet(w[0][0], w[1][0])):
+            w = getWeights()
+            print("updating x and y")
+            continue
+        energyFunction = getF(w[0][0], w[1][0])
+        energy.append(energyFunction)
+        hasConverged = convergeCondition(w0[0][0], w0[1][0], w[0][0], w[1][0])
+        index+=1
+        #print('x: ',w[0][0]," y: ",w[1][0],"  energy function: ", energyFunction, " gradients gx: ", g[0][0], " gy: ", g[1][0])
+    print( "iterations ", index)
+    plotGraphs(iterations, energy)
+
+findOptimalWeights(False)
+
+findOptimalWeights(True)
