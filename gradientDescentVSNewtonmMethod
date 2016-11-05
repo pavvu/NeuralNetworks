@@ -35,8 +35,8 @@ def getInitialWeights():
 def getWeights():
     #return 0.45,0.45
     w = np.zeros(shape = (2,1))
-    x= 0.001
-    y = 0.0004
+    x= 0.45
+    y = 0.45
     w[0][0] = x
     w[1][0] = y
     return w
@@ -69,6 +69,10 @@ def findOptimalWeights(isNewton):
     index = 0
     iterations = []
     energy = []
+    xpoints = []
+    xpoints.append(0.45)
+    ypoints = []
+    ypoints.append(0.45)
     while (not hasConverged):
         iterations.append(index)
         index+=1
@@ -82,6 +86,9 @@ def findOptimalWeights(isNewton):
         else:
             w = w - n*(g)
 
+        xpoints.append(w[0][0])
+        ypoints.append(w[1][0])
+
         if (not areConstraintsMet(w[0][0], w[1][0])):
             w = getWeights()
             print("updating x and y")
@@ -92,6 +99,12 @@ def findOptimalWeights(isNewton):
         index+=1
         #print('x: ',w[0][0]," y: ",w[1][0],"  energy function: ", energyFunction, " gradients gx: ", g[0][0], " gy: ", g[1][0])
     print( "iterations ", index)
+
+    plt.plot(xpoints, ypoints, 'b')
+    plt.xlabel("w0")
+    plt.ylabel("w1")
+    plt.show()
+
     plotGraphs(iterations, energy)
 
 findOptimalWeights(False)
