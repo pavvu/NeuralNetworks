@@ -4,14 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 ## Global Variables
-trainingExamples = 300
-x = np.sort(np.random.uniform(0, 1, size=trainingExamples))
-d = np.add(np.add( np.sin(20*x), 3*x), np.random.uniform(-0.1, 0.1, size=trainingExamples))
+trainingExamples = 5
+x = np.random.randn(784,5)
+d = np.random.randn(10,10)
 fillOnes = np.array(np.ones(trainingExamples))
-x = np.vstack([ fillOnes, x])
 v = []
-wInPut = np.random.randn(24,2)
-wOutPut = np.random.randn(1,25)
+wInPut = np.random.randn(784,784)
+wOutPut = np.random.randn(10,784)
 op1 = []
 vDash = []
 computedOP = []
@@ -27,7 +26,6 @@ def plotXvsD(computed):
 def getOutPut1(v):
     global op1
     op1 = np.tanh(v)
-    op1 = np.append(1,op1)
     return op1
 
 def getVdash(outPut1):
@@ -37,7 +35,7 @@ def getVdash(outPut1):
      return vDash
 
 def getPhiDash(v):
-    derivative = 1 - math.pow(np.tanh(v), 2)
+    derivative = 1 - np.power(np.tanh(v), 2)
     return derivative
 
 def getError(forInPutI, debug):
@@ -46,8 +44,10 @@ def getError(forInPutI, debug):
     v = wInPut.dot(currx)
     op1 = getOutPut1(v)
     vDash = getVdash(op1)
-    op2 = vDash[0]
+    op2 = np.tanh(vDash)
+
     computedOP.append(op2)
+    # need to change desired output
     dForInPutI = d[forInPutI]
     error = (dForInPutI - op2)
     if debug:
@@ -63,15 +63,22 @@ def getError(forInPutI, debug):
 def getUpdates(forInPutI, debug):
     global  vDash, op1, v, x, wOutPut
     error = getError(forInPutI, False)
-    phiDashOfV = 1
-    delta = error * phiDashOfV
+    phiDashOfVDash = getPhiDash(vDash)
+    delta = error * phiDashOfVDash
+    delta = delta.reshape(10,1)
+    op1 = op1.reshape(1,784)
     deltaForWOutPut = delta * op1
-    deltaForWInPut = np.random.rand(24,2)
+    deltaForWInPut = np.random.rand(784,784)
     currx = x[:, forInPutI]
-    for index in range (0, 24):
-        delta1 = delta * wOutPut[0][index+1] * getPhiDash(v[index])
-        deltaForWInPut[index][0] =  delta1 * currx[0]
-        deltaForWInPut[index][1] =  delta1 * currx[1]
+    #deltaForWInPut = (getPhiDash(v) * delta).T.dot(wOutPut)
+    deltaForWInPut = (wOutPut.T).dot(delta) * getPhiDash(v).reshape(784,1)
+    shape = deltaForWInPut.shape
+    print ("shape ", shape)
+    # for i in range (0, 784):
+    #     for j in range(0, 784):
+    #         delta1 = delta * getPhiDash(v)
+    #         deltaForWInPut[i][j] =  delta1 * currx[j]
+
     return deltaForWOutPut, deltaForWInPut
 
 converged = False
@@ -81,18 +88,18 @@ while(not converged):
     epoch +=1
     MSE = 0.0
     computedOP = []
-    for index in range(0, trainingExamples):
-        error = getError(index, False)
-        MSE = MSE + math.pow(error, 2)
-    MSE = MSE/trainingExamples
-
-    if(MSE < 0.01):
-        converged = True
-        plotXvsD(computedOP)
-        #plotXvsD(computedOP)
-
-    if (epoch%300 ==0):
-        print("epoch ", epoch, " MSE ", MSE)
+    # for index in range(0, trainingExamples):
+    #     error = getError(index, False)
+    #     MSE = MSE + math.pow(error, 2)
+    # MSE = MSE/trainingExamples
+    #
+    # if(MSE < 0.01):
+    #     converged = True
+    #     plotXvsD(computedOP)
+    #     #plotXvsD(computedOP)
+    #
+    # if (epoch%300 ==0):
+    #     print("epoch ", epoch, " MSE ", MSE)
 
     # if(epoch%3000 == 0 and epoch > 0):
     #     learningRate *= 0.9
