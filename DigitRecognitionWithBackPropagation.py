@@ -31,16 +31,18 @@ x, size_img = getImagesArray("train-images.idx3-ubyte")
 d = getLabelsArray("train-labels.idx1-ubyte", size_img, 10)
 x = x.T
 #x = np.random.randn(784,5)
-trainingExamples = 200
+trainingExamples = 10000
 print ("trainingExamples ", trainingExamples)
 #d = np.random.randn(10,10)
 fillOnes = np.array(np.ones(trainingExamples))
 v = []
-wInPut = np.random.randn(784,784)
-wOutPut = np.random.randn(10,784)
+neuronsInHiddenLayer = 100
+wInPut = np.random.randn(neuronsInHiddenLayer,784)
+wOutPut = np.random.randn(10,neuronsInHiddenLayer)
 op1 = []
 vDash = []
 computedOP = []
+
 
 def plotXvsD(computed):
     global x, d
@@ -133,15 +135,15 @@ def getUpdates(forInPutI, debug):
     global  vDash, op1, v, x, wOutPut
     error = getError(forInPutI, False)
     phiDashOfVDash = getPhiDash(vDash)
-    delta = error * phiDashOfVDash
+    delta = error #* phiDashOfVDash
     delta = delta.reshape(10,1)
-    op1 = op1.reshape(1,784)
+    op1 = op1.reshape(1,neuronsInHiddenLayer)
     deltaForWOutPut = delta * op1
-    deltaForWInPut = np.random.rand(784,784)
+    deltaForWInPut = np.random.rand(neuronsInHiddenLayer,784)
     currx = x[:, forInPutI]
     #deltaForWInPut = (getPhiDash(v) * delta).T.dot(wOutPut)
-    phiDashOfV  = getPhiDash(v).reshape(784,1)
-    deltaForWInPut = (wOutPut.T).dot(delta) * phiDashOfV
+    phiDashOfV  = getPhiDash(v).reshape(neuronsInHiddenLayer,1)
+    deltaForWInPut = (wOutPut.T).dot(delta) #* phiDashOfV
     #print ("phiDashOfV ", phiDashOfV)
     deltaForWInPut = deltaForWInPut * currx
     shape = deltaForWInPut.shape
@@ -154,35 +156,48 @@ def getUpdates(forInPutI, debug):
     return deltaForWOutPut, deltaForWInPut
 
 converged = False
-learningRate = 0.5
+learningRate = 0.01
 epoch = 0
+prev_er = 1
 while(not converged):
     epoch +=1
-    erros = 0.0
-    computedOP = []
-    for index in range(0, trainingExamples):
-        if(not isCorrectlyClassified(index)):
-            erros+=1
-
-    print("error % ", erros/trainingExamples)
-    #
-    # if(MSE < 0.01):
-    #     converged = True
-    #     plotXvsD(computedOP)
-    #     #plotXvsD(computedOP)
-    #
-    # if (epoch%300 ==0):
-    #     print("epoch ", epoch, " MSE ", MSE)
-
-    # if(epoch%3000 == 0 and epoch > 0):
-    #     learningRate *= 0.9
-
     shuffled_index = list(range(0, trainingExamples))
     random.shuffle(shuffled_index)
+    wInPutPrevious = wInPut
+    wOutPutPrevious = wOutPut
     for forInPutI in range (0, trainingExamples):
         deltaForWOutPut, deltaForWInPut = getUpdates(forInPutI, False)
         wInPut = wInPut + learningRate * deltaForWInPut
         wOutPut = wOutPut + learningRate * deltaForWOutPut
     print("epoch ", epoch)
-    print("winput ", wInPut[0][1:10])
-    print("WOutPut ", wOutPut[0][1:10])
+
+    erros = 0.0
+    computedOP = []
+    for index in range(0, trainingExamples):
+        if (not isCorrectlyClassified(index)):
+            erros += 1
+    er = erros / trainingExamples
+
+    if (er >= prev_er):
+        learningRate = learningRate * 0.9
+        wInPut = wInPutPrevious
+        wOutPut = wOutPutPrevious
+
+    print("error rate ", er)
+    prev_er = er
+
+
+    # #print([x for t in (wInPut - wInPutPrevious) for x in t if x != 0])
+    # if (not (wInPutPrevious == wInPut).all()):
+    #     print("winput updated")
+    # else:
+    #     print("winput not updated")
+    #
+    # if (not (wOutPutPrevious == wOutPut).all()):
+    #     print("woutput updated")
+    # else:
+    #     print("woutput not updated")
+
+    # return True
+    # print("winput ", wInPut[0][1:10])
+    # print("WOutPut ", wOutPut[0][1:10])
