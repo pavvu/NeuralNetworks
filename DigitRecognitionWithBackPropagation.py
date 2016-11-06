@@ -2,11 +2,38 @@ import math
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import os, struct
+from array import array as pyarray
+
+# Reading input from the images
+def getLabelsArray(fname, size_img, output_dim):
+    flbl = open(fname, 'rb')
+    magic_nr, size_label = struct.unpack(">II", flbl.read(8))
+    lbl = pyarray("b", flbl.read())
+    flbl.close()
+
+    desired_label = np.zeros((size_img, output_dim), dtype=np.int)
+    for i in range(size_label):
+        desired_label[i][lbl[i]] = 1
+
+    return desired_label
+
+def getImagesArray(fname):
+    fimg = open(fname, 'rb')
+    magic_nr, size_img, rows, cols = struct.unpack(">IIII", fimg.read(16))
+    img = pyarray("B", fimg.read())
+    img = np.asarray(img).reshape(size_img, rows*cols)
+    fimg.close()
+    return img, size_img
 
 ## Global Variables
-trainingExamples = 5
-x = np.random.randn(784,5)
-d = np.random.randn(10,10)
+x, size_img = getImagesArray("train-images.idx3-ubyte")
+d = getLabelsArray("train-labels.idx1-ubyte", size_img, 10)
+x = x.T
+#x = np.random.randn(784,5)
+trainingExamples = 200
+print ("trainingExamples ", trainingExamples)
+#d = np.random.randn(10,10)
 fillOnes = np.array(np.ones(trainingExamples))
 v = []
 wInPut = np.random.randn(784,784)
@@ -26,7 +53,14 @@ def plotXvsD(computed):
 def getOutPut1(v):
     global op1
     op1 = np.tanh(v)
+    #op1 = v
     return op1
+
+def getOutPut2(v):
+    global op2
+    # op1 = np.tanh(v)
+    op2 = np.tanh(v)
+    return op2
 
 def getVdash(outPut1):
      global wOutPut, vDash
@@ -37,6 +71,41 @@ def getVdash(outPut1):
 def getPhiDash(v):
     derivative = 1 - np.power(np.tanh(v), 2)
     return derivative
+    #return v.fill(1)
+
+# to find index of maximum value in a matrix of size 10X1
+# is required to build computed output, which will contain 1 at maximumvalue and 0 at other places
+def findMaxIndex (tempV):
+    maxNumber = -100000
+    maxIndex = -1
+    for j in range (0,10):
+        if (tempV[j][0] > maxNumber):
+            maxNumber = tempV[j][0]
+            maxIndex = j;
+    return maxIndex
+
+def getVectorWithOneAtIndex(maxIndex):
+    tempV =np.random.rand(10,1)
+    tempV.fill(0)
+    tempV[maxIndex][0]=1
+    return tempV
+
+def isCorrectlyClassified(forInPutI, debug=False):
+    global  x
+    currx = x[:, forInPutI]
+    v = wInPut.dot(currx)
+    op1 = getOutPut1(v)
+    vDash = getVdash(op1)
+    op2 =  getOutPut2(vDash)
+    op2 = op2.reshape(10,1)
+    maxIndex = findMaxIndex(op2)
+    op2 = getVectorWithOneAtIndex(maxIndex)
+    dForInPutI = d[forInPutI][:]
+    op2 = op2.T
+    if (not (dForInPutI == op2).all()):
+       return False
+    return True
+
 
 def getError(forInPutI, debug):
     global vDash, op1, v, computedOP, x
@@ -44,11 +113,11 @@ def getError(forInPutI, debug):
     v = wInPut.dot(currx)
     op1 = getOutPut1(v)
     vDash = getVdash(op1)
-    op2 = np.tanh(vDash)
+    op2 = getOutPut2(vDash)
 
-    computedOP.append(op2)
+    #computedOP.append(op2)
     # need to change desired output
-    dForInPutI = d[forInPutI]
+    dForInPutI = d[forInPutI][:]
     error = (dForInPutI - op2)
     if debug:
         print("desired op for input", forInPutI, " : ", dForInPutI)
@@ -71,9 +140,12 @@ def getUpdates(forInPutI, debug):
     deltaForWInPut = np.random.rand(784,784)
     currx = x[:, forInPutI]
     #deltaForWInPut = (getPhiDash(v) * delta).T.dot(wOutPut)
-    deltaForWInPut = (wOutPut.T).dot(delta) * getPhiDash(v).reshape(784,1)
+    phiDashOfV  = getPhiDash(v).reshape(784,1)
+    deltaForWInPut = (wOutPut.T).dot(delta) * phiDashOfV
+    #print ("phiDashOfV ", phiDashOfV)
+    deltaForWInPut = deltaForWInPut * currx
     shape = deltaForWInPut.shape
-    print ("shape ", shape)
+    #print ("shape ", shape)
     # for i in range (0, 784):
     #     for j in range(0, 784):
     #         delta1 = delta * getPhiDash(v)
@@ -82,16 +154,17 @@ def getUpdates(forInPutI, debug):
     return deltaForWOutPut, deltaForWInPut
 
 converged = False
-learningRate = 0.05
+learningRate = 0.5
 epoch = 0
 while(not converged):
     epoch +=1
-    MSE = 0.0
+    erros = 0.0
     computedOP = []
-    # for index in range(0, trainingExamples):
-    #     error = getError(index, False)
-    #     MSE = MSE + math.pow(error, 2)
-    # MSE = MSE/trainingExamples
+    for index in range(0, trainingExamples):
+        if(not isCorrectlyClassified(index)):
+            erros+=1
+
+    print("error % ", erros/trainingExamples)
     #
     # if(MSE < 0.01):
     #     converged = True
@@ -110,3 +183,6 @@ while(not converged):
         deltaForWOutPut, deltaForWInPut = getUpdates(forInPutI, False)
         wInPut = wInPut + learningRate * deltaForWInPut
         wOutPut = wOutPut + learningRate * deltaForWOutPut
+    print("epoch ", epoch)
+    print("winput ", wInPut[0][1:10])
+    print("WOutPut ", wOutPut[0][1:10])
