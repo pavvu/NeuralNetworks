@@ -16,12 +16,16 @@ op1 = []
 vDash = []
 computedOP = []
 
+# for i in range(0, trainingExamples):
+#     plt.scatter(x[1][i], d[i], color='r', marker='o')
+# plt.show()
+
 def plotXvsD(computed):
     global x, d
     for i in range(0,trainingExamples):
         plt.scatter(x[1][i], computed[i], color='b', marker = '*')
     for i in range(0, trainingExamples):
-        plt.scatter(x[1][i], d[i], color='r', marker='*')
+        plt.scatter(x[1][i], d[i], color='r', marker='+')
     plt.show()
 
 def getOutPut1(v):
@@ -77,18 +81,27 @@ def getUpdates(forInPutI, debug):
 converged = False
 learningRate = 0.05
 epoch = 0
+MSEInEpoch = []
+epochs = []
 while(not converged):
     epoch +=1
+    epochs.append(epoch)
     MSE = 0.0
     computedOP = []
     for index in range(0, trainingExamples):
         error = getError(index, False)
         MSE = MSE + math.pow(error, 2)
     MSE = MSE/trainingExamples
+    MSEInEpoch.append(MSE)
 
     if(MSE < 0.01):
         converged = True
         plotXvsD(computedOP)
+        plt.axis([0, epoch, 0, 1.5])
+        plt.plot(epochs, MSEInEpoch, 'b')
+        plt.xlabel("EpochCount")
+        plt.ylabel("MSE")
+        plt.show()
         #plotXvsD(computedOP)
 
     if (epoch%300 ==0):

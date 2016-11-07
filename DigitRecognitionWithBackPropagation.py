@@ -1,3 +1,4 @@
+import time
 import math
 import random
 import numpy as np
@@ -30,13 +31,19 @@ def getImagesArray(fname):
 x, size_img = getImagesArray("train-images.idx3-ubyte")
 d = getLabelsArray("train-labels.idx1-ubyte", size_img, 10)
 x = x.T
+
+testImg, test_size_img  = getImagesArray("t10k-images.idx3-ubyte")
+test_d = getLabelsArray("t10k-labels.idx1-ubyte", test_size_img, 10)
+testImg = testImg.T
+testExamples = testImg.shape[1]
+
 #x = np.random.randn(784,5)
-trainingExamples = 10000
+trainingExamples = 5000
 print ("trainingExamples ", trainingExamples)
 #d = np.random.randn(10,10)
 fillOnes = np.array(np.ones(trainingExamples))
 v = []
-neuronsInHiddenLayer = 100
+neuronsInHiddenLayer = 75
 wInPut = np.random.randn(neuronsInHiddenLayer,784)
 wOutPut = np.random.randn(10,neuronsInHiddenLayer)
 op1 = []
@@ -92,9 +99,8 @@ def getVectorWithOneAtIndex(maxIndex):
     tempV[maxIndex][0]=1
     return tempV
 
-def isCorrectlyClassified(forInPutI, debug=False):
-    global  x
-    currx = x[:, forInPutI]
+def isCorrectlyClassified(forInPutI, data, labels, debug=False):
+    currx = data[:, forInPutI]
     v = wInPut.dot(currx)
     op1 = getOutPut1(v)
     vDash = getVdash(op1)
@@ -102,7 +108,7 @@ def isCorrectlyClassified(forInPutI, debug=False):
     op2 = op2.reshape(10,1)
     maxIndex = findMaxIndex(op2)
     op2 = getVectorWithOneAtIndex(maxIndex)
-    dForInPutI = d[forInPutI][:]
+    dForInPutI = labels[forInPutI][:]
     op2 = op2.T
     if (not (dForInPutI == op2).all()):
        return False
@@ -156,16 +162,19 @@ def getUpdates(forInPutI, debug):
     return deltaForWOutPut, deltaForWInPut
 
 converged = False
-learningRate = 0.01
+learningRate = 0.003
 epoch = 0
 prev_er = 1
 while(not converged):
+    start_time = time.time()
     epoch +=1
     shuffled_index = list(range(0, trainingExamples))
     random.shuffle(shuffled_index)
     wInPutPrevious = wInPut
     wOutPutPrevious = wOutPut
-    for forInPutI in range (0, trainingExamples):
+    shuffled_index = list(range(0, trainingExamples))
+    random.shuffle(shuffled_index)
+    for forInPutI in  ( shuffled_index):
         deltaForWOutPut, deltaForWInPut = getUpdates(forInPutI, False)
         wInPut = wInPut + learningRate * deltaForWInPut
         wOutPut = wOutPut + learningRate * deltaForWOutPut
@@ -174,30 +183,26 @@ while(not converged):
     erros = 0.0
     computedOP = []
     for index in range(0, trainingExamples):
-        if (not isCorrectlyClassified(index)):
+        if (not isCorrectlyClassified(index, x, d)):
             erros += 1
     er = erros / trainingExamples
 
     if (er >= prev_er):
-        learningRate = learningRate * 0.9
+        learningRate = learningRate - 0.0001
         wInPut = wInPutPrevious
         wOutPut = wOutPutPrevious
 
-    print("error rate ", er)
+    print("error rate ", er, " learning rate ", learningRate)
     prev_er = er
 
+    #Testing images
+    if (er < 0.20) :
+        testErros = 0.0
 
-    # #print([x for t in (wInPut - wInPutPrevious) for x in t if x != 0])
-    # if (not (wInPutPrevious == wInPut).all()):
-    #     print("winput updated")
-    # else:
-    #     print("winput not updated")
-    #
-    # if (not (wOutPutPrevious == wOutPut).all()):
-    #     print("woutput updated")
-    # else:
-    #     print("woutput not updated")
+        for index in range(0, testExamples):
+            if (not isCorrectlyClassified(index, testImg, test_d)):
+                testErros += 1
+        testErrorRate = testErros / testExamples
+        print ("test error rate ", testErrorRate)
 
-    # return True
-    # print("winput ", wInPut[0][1:10])
-    # print("WOutPut ", wOutPut[0][1:10])
+    print("tim taken for this epoch ", time.time()-start_time)
