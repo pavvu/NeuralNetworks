@@ -38,7 +38,7 @@ testImg = testImg.T
 testExamples = testImg.shape[1]
 
 #x = np.random.randn(784,5)
-trainingExamples = 5000
+trainingExamples = 15000
 print ("trainingExamples ", trainingExamples)
 #d = np.random.randn(10,10)
 fillOnes = np.array(np.ones(trainingExamples))
@@ -99,6 +99,12 @@ def getVectorWithOneAtIndex(maxIndex):
     tempV[maxIndex][0]=1
     return tempV
 
+def getMSE(dForInPutI, op):
+    mse = 0.0
+    for i in range(0,10):
+        mse = mse + math.pow((dForInPutI[0][i] - op[0][i]) ,2)
+    mse = mse/2
+
 def isCorrectlyClassified(forInPutI, data, labels, debug=False):
     currx = data[:, forInPutI]
     v = wInPut.dot(currx)
@@ -110,9 +116,10 @@ def isCorrectlyClassified(forInPutI, data, labels, debug=False):
     op2 = getVectorWithOneAtIndex(maxIndex)
     dForInPutI = labels[forInPutI][:]
     op2 = op2.T
+    mse  = getMSE(dForInPutI, op2)
     if (not (dForInPutI == op2).all()):
-       return False
-    return True
+       return mse, False
+    return mse, True
 
 
 def getError(forInPutI, debug):
@@ -165,9 +172,15 @@ converged = False
 learningRate = 0.003
 epoch = 0
 prev_er = 1
+epochCount = []
+noOfTrainErros = []
+noOfTestErros = []
+MSEinEpoch = []
 while(not converged):
     start_time = time.time()
     epoch +=1
+    epochCount.append(epoch)
+
     shuffled_index = list(range(0, trainingExamples))
     random.shuffle(shuffled_index)
     wInPutPrevious = wInPut
@@ -182,13 +195,19 @@ while(not converged):
 
     erros = 0.0
     computedOP = []
+    mse = 0.0
     for index in range(0, trainingExamples):
-        if (not isCorrectlyClassified(index, x, d)):
+        tempMse, correctlyClassified = isCorrectlyClassified(index, x, d)
+        mse = mse + tempMse
+        if (not correctlyClassified):
             erros += 1
     er = erros / trainingExamples
+    noOfTrainErros.append(erros)
+    mse = mse/trainingExamples
+    MSEinEpoch.append(mse)
 
     if (er >= prev_er):
-        learningRate = learningRate - 0.0001
+        learningRate = learningRate * 0.9
         wInPut = wInPutPrevious
         wOutPut = wOutPutPrevious
 
@@ -196,13 +215,22 @@ while(not converged):
     prev_er = er
 
     #Testing images
-    if (er < 0.20) :
+    if (not converged) :
         testErros = 0.0
 
         for index in range(0, testExamples):
             if (not isCorrectlyClassified(index, testImg, test_d)):
                 testErros += 1
         testErrorRate = testErros / testExamples
+        noOfTestErros.append(testErros)
         print ("test error rate ", testErrorRate)
+        if(testErrorRate < 0.1 or epoch > 24):
+            plt.plot(epochCount, noOfTrainErros, 'b')
+            plt.plot(epochCount, noOfTestErros, 'r')
+            plt.show()
+            plt.plot(epochCount, MSEinEpoch, 'r')
+            plt.show()
+            converged = True
+
 
     print("tim taken for this epoch ", time.time()-start_time)
