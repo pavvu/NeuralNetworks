@@ -17,7 +17,9 @@ for row in inputs:
     print(e1)
     #print(res)
     res =  [1 if(x>=0) else -1 for x in res[0]]
+    #more testing
     #e2 = np.dot(curipTranspose, np.dot(w, curip)) - 2 * np.dot(biasTranspose, curip)
     print (curip.reshape(1,3), " -> ", res)
+    #more testing
     print("***********")
     #testing git commit --amend
